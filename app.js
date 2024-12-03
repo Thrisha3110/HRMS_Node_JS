@@ -16,6 +16,9 @@ const departmentRoutes = require('./routes/department');
 app.use('/api/department', departmentRoutes);
 const designationRoutes = require('./routes/designation');
 app.use('/api/designation', designationRoutes);
+const employeeRoutes = require('./routes/designation');
+app.use('/api/employee', employeeRoutes);
+
 
 // Start Server
 const PORT = process.env.PORT || 3000;
