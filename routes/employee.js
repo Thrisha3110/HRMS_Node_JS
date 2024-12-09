@@ -101,7 +101,8 @@ router.post('/', (req, res) => {
       return res.status(409).json({ error: 'Employee ID already exists' });
     }
  
-    const created_at = moment().format('YYYY-MM-DD HH:mm:ss');
+    const created_at = moment().format('YYYY-MM-DD HH:mm:ss'); 
+    
     const insertQuery = `
       INSERT INTO employee (
         employee_id, name, email,password,phone, emergency_contact, doj, gender, blood_group,
