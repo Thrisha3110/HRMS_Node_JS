@@ -5,10 +5,6 @@ const moment = require('moment');
 
 // Get all users
 router.get('/', (req, res) => {
-  
-   //const {status} = req.body;
-  // const {name} = req.body;
-  
   db.query('SELECT * FROM department' , (err, results) => {
     if (err) return res.status(500).send(err);
     res.json(results) ; 
@@ -24,14 +20,29 @@ router.get('/backup-data', (req, res) => {
 
 // Get a user by ID
 router.get('/:id', (req, res) => {
+  var responseData = {};
   const { id } = req.params;
   db.query('SELECT * FROM department WHERE id = ?', [id], (err, results) => {
     if (err) return res.status(500).send(err);
-    if (results.length === 0) return res.status(404).send('sorry branch not found');
-    res.json(results[0]);
+    if (results.length === 0){
+      //return res.status(404).send('sorry branch not found');
+      responseData = {
+          status: "400",
+          message:"Record not found",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+    responseData = {
+        status: "200",
+        message:"Get all records",
+        data:{
+          department: results[0]
+        }
+    }
+    res.json(responseData);
   });
 });
-
 // Create a new user
 router.post('/', (req, res) => {
   const {name} = req.body;
@@ -99,9 +110,10 @@ router.delete('/:id', (req, res) => {
   db.query('SELECT * FROM department WHERE id = ?', [id], (err, results) => {
     if (err) return res.status(500).send(err);
 
-    if (results.length === 0) {
+    if (results.length === 0) 
+      {
       return res.status(404).json({ error: 'department not found' });
-    }
+      }
 
     // Proceed with deletion if the branch exists
     db.query('UPDATE department SET status=0 WHERE id = ?', [id], (err) => {

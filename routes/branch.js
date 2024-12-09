@@ -24,14 +24,30 @@ router.get('/backup-data', (req, res) => {
 
 // Get a user by ID
 router.get('/:id', (req, res) => {
+  var responseData = {};
   const { id } = req.params;
   db.query('SELECT * FROM branch WHERE id = ?', [id], (err, results) => {
     if (err) return res.status(500).send(err);
-    if (results.length === 0) return res.status(404).send('sorry branch not found');
-    res.json(results[0]);
+    if (results.length === 0){
+      //return res.status(404).send('sorry branch not found');
+      responseData = {
+          status: "400",
+          message:"Record not found",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+    responseData = {
+        status: "200",
+        message:"Get all records",
+        data:{
+          branch: results[0]
+        }
+    }
+    //res.json({status:"200",data});
+    res.json(responseData);
   });
 });
-
 // Create a new user
 router.post('/', (req, res) => {
   const {name} = req.body;

@@ -16,8 +16,10 @@ const departmentRoutes = require('./routes/department');
 app.use('/api/department', departmentRoutes);
 const designationRoutes = require('./routes/designation');
 app.use('/api/designation', designationRoutes);
-const employeeRoutes = require('./routes/designation');
+const employeeRoutes = require('./routes/employee');
 app.use('/api/employee', employeeRoutes);
+const loginRoutes = require('./routes/login');
+app.use('/api/login', loginRoutes);
 
 
 // Start Server
