@@ -17,7 +17,8 @@ const transporter = nodemailer.createTransport({
 });
 
 // Middleware to authenticate JWT tokens
-function authenticateToken(req, res, next) {
+function authenticateToken(req,res,next) 
+{
   const token = req.headers['authorization'];
   if (!token) return res.status(401).json({ error: 'Access token required' });
   jwt.verify(token, 'your-secret-key', (err, user) => {
@@ -25,8 +26,8 @@ function authenticateToken(req, res, next) {
     req.user = user;
     next();
   });
-}
-
+}  
+   
 // Register (Create a new employee with password hashing)
 router.post('/register', async (req, res) => {
   const { employee_id, name, email, password, phone, doj, gender, department_id, designation_id, branch_id, address } = req.body;
@@ -37,7 +38,7 @@ router.post('/register', async (req, res) => {
 
   try {
     // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password,10);
     const created_at = moment().format('YYYY-MM-DD HH:mm:ss');
 
     const insertQuery = `
@@ -46,7 +47,8 @@ router.post('/register', async (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    db.query(insertQuery, [employee_id, name, email, hashedPassword, phone, doj, gender, department_id, designation_id, branch_id, address, created_at, 1], (err, results) => {
+    db.query(insertQuery, [employee_id, name, email, hashedPassword, phone, doj, gender, department_id, designation_id, branch_id, address, created_at, 1], (err, results) =>
+         {
       if (err) return res.status(500).send(err);
 
       // Send welcome email
@@ -83,46 +85,71 @@ router.post('/', (req, res) => {
   db.query('SELECT * FROM employee WHERE email = ? AND status = 1', [email], async (err, results) => {
     if (err) return res.status(500).send(err);
     if (results.length === 0) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      
+      responseData = {
+          status: "400",
+          message:"Record not found",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+    responseData = {
+        status: "200",
+        message:"Get all records",
+        data:{
+          department: results[0]
+        }
     }
 
     const user = results[0];
 
     // Compare provided password with hashed password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+    if (!isMatch) 
+    {
+      
+      responseData = {
+          status: "400",
+          message:"Record not found",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+    responseData = {
+        status: "200",
+        message:"Get all records",
+        data:{
+          department: results[0]
+        }
     }
-
     // Generate a JWT token
-    const token = jwt.sign({ id: user.id, email: user.email }, 'your-secret-key', { expiresIn: '1h' });
-
-    res.status(200).json({ message: 'Login successful', token });
+    const token = jwt.sign({ id: user.id, email: user.email }, 'your-secret-key', { expiresIn: '60s' });
+    res.status(200).json({ message: 'successful login', token });
   });
 });
 
 // Reset Password API
-router.post('/reset-password', async (req, res) => {
-  const { email, newPassword } = req.body;
+// router.post('/reset-password', async (req, res) => {
+//   const { email, newPassword } = req.body;
 
-  if (!email || !newPassword) {
-    return res.status(400).json({ error: 'Email and new password are required' });
-  }
+//   if (!email || !newPassword) {
+//     return res.status(400).json({ error: 'Email and new password are required' });
+//   }
 
-  try {
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+//   try {
+//     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    db.query('UPDATE employee SET password = ? WHERE email = ? AND status = 1', [hashedPassword, email], (err, results) => {
-      if (err) return res.status(500).send(err);
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ error: 'Email not found or inactive account' });
-      }
-      res.json({ message: 'Password reset successfully' });
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Error hashing password' });
-  }
-});
+//     db.query('UPDATE employee SET password = ? WHERE email = ? AND status = 1', [hashedPassword, email], (err, results) => {
+//       if (err) return res.status(500).send(err);
+//       if (results.affectedRows === 0) {
+//         return res.status(404).json({ error: 'Email not found or inactive account' });
+//       }
+//       res.json({ message: 'Password reset successfully' });
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: 'Error hashing password' });
+//   }
+// });
 
 // Protected Route Example
 router.get('/protected', authenticateToken, (req, res) => {
