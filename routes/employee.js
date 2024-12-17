@@ -102,9 +102,20 @@ router.post('/',async (req, res) => {
   // Check for duplicate employee_id
   db.query('SELECT * FROM employee WHERE employee_id = ?', [employee_id], (err, results) => {
     if (err) return res.status(500).send(err);
-    if (results.length > 0) {
-      return res.status(409).json({ error: 'Employee ID already exists' });
+    if (results.length > 0) if (results.length === 0) {
+      return res.status(404).json({
+        status: "400",
+        message: "Record not found",
+        data: {},
+      });
     }
+  
+    const employee = processEmployeeDetails(results[0]);
+    res.json({
+      status: "200",
+      message: "Get employee record",
+      data: { employee },
+    });
 const created_at = moment().format('YYYY-MM-DD HH:mm:ss'); 
 
     const insertQuery = `
@@ -187,10 +198,20 @@ router.delete('/:id', (req, res) => {
  
   db.query('SELECT * FROM employee WHERE id = ?', [id], (err, results) => {
     if (err) return res.status(500).send(err);
-    if (results.length === 0) {
-      return res.status(404).json({ error: 'Employee not found' });
+     if (results.length === 0) {
+      return res.status(404).json({
+        status: "400",
+        message: "Record not found",
+        data: {},
+      });
     }
- 
+  
+    const employee = processEmployeeDetails(results[0]);
+    res.json({
+      status: "200",
+      message: "Get employee record",
+      data: { employee },
+    });
     // Proceed with deletion if the employee is not active
     db.query('UPDATE employee SET status = 0 WHERE id = ?', [id], (err) => {
       if (err) return res.status(500).send(err);

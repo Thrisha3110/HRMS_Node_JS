@@ -56,13 +56,27 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'Name is required' });
   }
   // Check if the name already exists for a different record
-  db.query('SELECT * FROM branch WHERE name = ?', [name], (err, results) => {
+  db.query('SELECT * FROM branch WHERE name = ?', [name], (err, results) => 
+    {
     
     if (err) return res.status(500).send(err);
 
     if (results.length > 0) //At least one record in the database matches the condition (ex.another record has the same name)
     {
-      return res.status(409).json({ error: 'Branch Name already exists' });
+      //return res.status(404).send('sorry branch not found');
+      responseData = {
+          status: "400",
+          message:"Record not found",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+    responseData = {
+        status: "200",
+        message:"Get all records",
+        data:{
+          branch: results[0]
+        }
     }
   });
   // Insert the branch with status set to true
