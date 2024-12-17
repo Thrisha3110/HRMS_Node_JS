@@ -11,7 +11,13 @@ router.get('/', (req, res) => {
   
   db.query('SELECT * FROM branch' , (err, results) => {
     if (err) return res.status(500).send(err);
-    res.json(results) ; 
+    //res.json(results) ; 
+    responseData = {
+        status: "200",
+        message:"Record found",
+        data:{results}
+    }
+    return res.json(responseData);
   }); 
 });
 
@@ -90,38 +96,59 @@ router.post('/', (req, res) => {
     }
   );
 });
-// Update a user
+
+// Update a branch
 router.put('/:id', (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
-  if (name == "") 
-    {
-    return res.status(404).json({ error: 'Please provide name' });
-    }
-// Check if the branch exists by id
-db.query('SELECT * FROM branch WHERE id = ?', [id], (err, results) => {
-  if (err) return res.status(500).send(err);
-
-  if (results.length === 0) {
-    return res.status(404).json({ error: 'Branch with given id not found' });
+  if (name == ""){
+    //return res.status(404).json({ error: 'Please provide name' });
+    responseData = {
+      status: "200",
+      message:"Record found",
+      data:{results}
   }
-// Check if the branch name is unique or not
-db.query('SELECT * FROM branch WHERE name = ? AND id != ?', [name, id], (err, nameResults) => {
-  if (err) return res.status(500).send(err); // Handle database errors
-
-  if (nameResults.length > 0) {
-    return res.status(409).json({ error: 'Branch Name already exists' }); 
+  responseData = {
+    status: "400",
+    message:"Record not found",
+    data:{}
+}
+  return res.json(responseData);
   }
-
-  // Proceed with updation if the branch exists
-  db.query('UPDATE branch SET name = ? WHERE id = ?', [name, id], (err) => {
+  // Check if the branch exists by id
+  db.query('SELECT * FROM branch WHERE id = ?', [id], (err, results) => {
     if (err) return res.status(500).send(err);
-    res.send('User updated successfully');
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Branch with given id not found' });
+    }
+    // Check if the branch name is unique or not
+    db.query('SELECT * FROM branch WHERE name = ? AND id != ?', [name, id], (err, nameResults) => {
+      if (err) return res.status(500).send(err); // Handle database errors
+
+      if (nameResults.length > 0) {
+        return res.status(409).json({ error: 'Branch Name already exists' }); 
+      }
+
+      // Proceed with updation if the branch exists
+      db.query('UPDATE branch SET name = ? WHERE id = ?', [name, id], (err) => {
+        responseData = {
+          status: "200",
+          message:"Record found",
+          data:{results}
+      }
+      responseData = {
+          status: "400",
+          message:"Record not found",
+          data:{}
+      }
+      return res.json(responseData);
+        res.send('User updated successfully');
+      });
+    });
   });
 });
-  
-});
-});
+
 // Delete a user
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
@@ -129,8 +156,21 @@ router.delete('/:id', (req, res) => {
   db.query('SELECT * FROM branch WHERE id = ?', [id], (err, results) => {
     if (err) return res.status(500).send(err);
 
-    if (results.length === 0) {
-      return res.status(404).json({ error: 'Branch not found' });
+    if (results.length === 0)  {
+      //return res.status(404).send('sorry branch not found');
+      responseData = {
+          status: "400",
+          message:"Record not found",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+    responseData = {
+        status: "200",
+        message:"Get all records",
+        data:{
+          department: results[0]
+        }
     }
 
     // Proceed with deletion if the branch exists

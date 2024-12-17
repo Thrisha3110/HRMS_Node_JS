@@ -11,6 +11,12 @@ router.get('/', (req, res) => {
   
   db.query('SELECT * FROM designation' , (err, results) => {
     if (err) return res.status(500).send(err);
+    responseData = {
+      status: "200",
+      message:"Record found",
+      data:{results}
+  }
+  return res.json(responseData);
     res.json(results) ; 
   }); 
 });
@@ -118,23 +124,39 @@ db.query('SELECT * FROM designation WHERE id = ?', [id], (err, results) => {
         designation: results[0]
       }
   }
-// Check if the branch name is unique or not
-db.query('SELECT * FROM designation WHERE name = ? AND id != ?', [name, id], (err, nameResults) => {
-  if (err) return res.status(500).send(err); // Handle database errors
+// // Check if the branch name is unique or not
+// db.query('SELECT * FROM designation WHERE name = ? AND id != ?', [name, id], (err, nameResults) => {
+//   if (err) return res.status(500).send(err); // Handle database errors
 
-  if (nameResults.length > 0) {
-    return res.status(409).json({ error: 'designation Name already exists' }); 
-  }
+//   if (nameResults.length > 0) 
 
-  // Proceed with updation if the branch exists
-  db.query('UPDATE designation SET name = ? WHERE id = ?', [name, id], (err) => {
-    if (err) return res.status(500).send(err);
-    res.send('User updated successfully');
-  });
+//   // Proceed with updation if the branch exists
+//   db.query('UPDATE designation SET name = ? WHERE id = ?', [name, id], (err) => {
+//     if (err) return res.status(500).send(err);
+//     res.send('User updated successfully');
+//   });
+// });
+// });
+// });
+// Proceed with updation if the branch exists
+db.query('UPDATE designatioon SET name = ? WHERE id = ?', [name, id], (err) => {
+  responseData = {
+    status: "200",
+    message:"Record found",
+    data:{results}
+}
+responseData = {
+    status: "400",
+    message:"Record not found",
+    data:{}
+}
+return res.json(responseData);
+  res.send('User updated successfully');
 });
-  
 });
 });
+
+
 // Delete a user
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
@@ -144,7 +166,7 @@ router.delete('/:id', (req, res) => {
 
     if (results.length === 0) 
       {
-        //return res.status(404).send('sorry branch not found');
+        return res.status(404).send('sorry branch not found');
         responseData = {
             status: "400",
             message:"Record not found",
@@ -163,6 +185,22 @@ router.delete('/:id', (req, res) => {
     // Proceed with deletion if the branch exists
     db.query('UPDATE designation SET status=0 WHERE id = ?', [id], (err) => {
       if (err) return res.status(500).send(err);
+      {
+        //return res.status(404).send('sorry branch not found');
+        responseData = {
+            status: "400",
+            message:"Record not found",
+            data:{}
+        }
+        return res.json(responseData);
+      } 
+      responseData = {
+          status: "200",
+          message:"Get all records",
+          data:{
+            department: results[0]
+          }
+      }
       res.send('designation deleted successfully');
     });
   });

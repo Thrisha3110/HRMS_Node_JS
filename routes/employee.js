@@ -40,7 +40,6 @@ const token = authHeader && authHeader.split(' ')[1];
 // Get all employees
 router.get('/', authenticateToken, (req, res) => {
   const { id } = req.params;
-
   const getDetailsQuery = `
 SELECT e.id, e.employee_id, e.name, e.email, e.phone, e.doj,
 d.name AS department_name, des.name AS designation_name, b.name AS branch_name

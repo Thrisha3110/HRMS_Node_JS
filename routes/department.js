@@ -7,7 +7,14 @@ const moment = require('moment');
 router.get('/', (req, res) => {
   db.query('SELECT * FROM department' , (err, results) => {
     if (err) return res.status(500).send(err);
-    res.json(results) ; 
+
+    responseData = {
+      status: "200",
+      message:"Record found",
+      data:{results}
+  }
+  return res.json(responseData);
+    //res.json(results) ; 
   }); 
 });
 

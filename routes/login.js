@@ -1,3 +1,4 @@
+
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -27,10 +28,9 @@ function authenticateToken(req,res,next)
     next();
   });
 }  
-   
 // Register (Create a new employee with password hashing)
 router.post('/register', async (req, res) => {
-  const { employee_id, name, email, password, phone, doj, gender, department_id, designation_id, branch_id, address } = req.body;
+const { employee_id, name, email, password, phone, doj, gender, department_id, designation_id, branch_id, address } = req.body;
 
   if (!employee_id || !name || !email || !password || !phone || !doj || !gender || !department_id || !designation_id || !branch_id) {
     return res.status(400).json({ error: 'Missing required fields' });
