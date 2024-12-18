@@ -30,125 +30,161 @@ router.get('/:id', (req, res) => {
   var responseData = {};
   const { id } = req.params;
   db.query('SELECT * FROM department WHERE id = ?', [id], (err, results) => {
-    if (err) return res.status(500).send(err);
+    if (err){
+      responseData = {
+        status: "400",
+        message: err,
+        data:{}
+      }
+      return res.json(responseData);
+      //return res.status(500).send(err);
+    } 
     if (results.length === 0){
       //return res.status(404).send('sorry branch not found');
       responseData = {
           status: "400",
-          message:"Record not found",
+          message:"department not found",
           data:{}
       }
       return res.json(responseData);
-    } 
-    responseData = {
+    } else{
+      responseData = {
         status: "200",
-        message:"Get all records",
+        message:"record found successfully",
         data:{
-          department: results[0]
+          result : results[0]
         }
+      }
+      return res.json(responseData);
     }
-    res.json(responseData);
   });
 });
+
+// Create a new user
 // Create a new user
 router.post('/', (req, res) => {
   const {name} = req.body;
 
   if (!name) {
-    return res.status(400).json({ error: 'Name is required' });
+   return res.status(400).json({ error: 'Name is required' });
   }
   // Check if the name already exists for a different record
-  db.query('SELECT * FROM department WHERE name = ?', [name], (err, results) => {
+  db.query('SELECT * FROM designation WHERE name = ?', [name], (err, results) => 
+    {
     
+    if (err) {
+      responseData = {
+        status: "400",
+        message: err,
+        data:{}
+      }
+      return res.json(responseData);
+      
+    }
+
+    if (results.length > 0)
+      { 
+      responseData = {
+          status: "400",
+          message:"This designation name already exist",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+  });
+  // Insert the designation with status set to true
+  const created_at = moment().format('YYYY-MM-DD HH:mm:ss');
+  db.query(
+    'INSERT INTO department (name, created_at) VALUES (?, ?)',
+    [name, created_at], // Set status to true for new entries
+    (err, results) => {
+      if (err){
+        responseData = {
+            status: "500",
+            message: err,
+           data:{}
+        }
+        return res.json(responseData);
+ 
+      } else {
+        responseData = {
+          status: "200",
+          message:"department saved successfully",
+          data:{
+            id: results.insertId
+          }
+        }
+        return res.json(responseData);
+      }
+    }
+  );
+});
+
+// Update a department
+router.put('/:id', (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+  if (name == ""){
+    //return res.status(404).json({ error: 'Please provide name' });
+    responseData = {
+      status: "200",
+      message:"Please provide name",
+      data:{}
+  }
+  
+  return res.json(responseData);
+  }
+  // Check if the department exists by id
+  db.query('SELECT * FROM department WHERE id = ?', [id], (err, results) => {
     if (err) return res.status(500).send(err);
 
-    if (results.length > 0) //At least one record in the database matches the condition (ex.another record has the same name)
-    {
-      //return res.status(404).send('sorry branch not found');
+    if (results.length === 0) 
+      {
+        responseData = {
+            status: "400",
+            message:"Record not found",
+            data:{}
+        }
+        return res.json(responseData);
+      } 
+      responseData = {
+          status: "200",
+          message:"Get all records",
+          data:{
+            //department: results[0]
+          }
+     }
+     return res.json(responseData);
+    // Check if the department name is unique or not
+    db.query('SELECT * FROM department WHERE name = ? AND id != ?', [name, id], (err, nameResults) => {
+      if (err) return res.status(500).send(err); // Handle database errors
+
+      if (nameResults.length > 0) {
+        return res.status(409).json({ error: 'department Name already exists' }); 
+      }
+
+      // updation if the branch exists
+      db.query('UPDATE department SET name = ? WHERE id = ?', [name, id], (err) => 
+        {
+        responseData = {
+          status: "200",
+          message:"Record found",
+          data:{results}
+      }
+      return res.json(responseData);
       responseData = {
           status: "400",
           message:"Record not found",
           data:{}
       }
       return res.json(responseData);
-    } 
-    responseData = {
-        status: "200",
-        message:"Get all records",
-        data:{
-        department: results[0]
-        }
-    }
-  });
-  // Insert the branch with status set to true
-  const created_at = moment().format('YYYY-MM-DD HH:mm:ss');
-  db.query(
-    'INSERT INTO department (name, created_at) VALUES (?, ?)',
-    [name, created_at], // Set status to true for new entries
-    (err, results) => {
-      if (err) return res.status(500).send(err);
-      res.status(201).json({ id: results.insertId, name });
-    }
-  );
-});
-// Update a user
-router.put('/:id', (req, res) => {
-  const { id } = req.params;
-  const { name } = req.body;
-  if (name == "") 
-    {
-    return res.status(404).json({ error: 'Please provide department name' });
-    }
-// Check if the branch exists by id
-db.query('SELECT * FROM department WHERE id = ?', [id], (err, results) => {
-  if (err) return res.status(500).send(err);
 
-  if (results.length === 0) {
-    //return res.status(404).send('sorry branch not found');
-    responseData = {
-        status: "400",
-        message:"Record not found",
-        data:{}
-    }
-    return res.json(responseData);
-  } 
-  responseData = {
-      status: "200",
-      message:"Get all records",
-      data:{
-        department: results[0]
-      }
-  }
-// Check if the branch name is unique or not
-db.query('SELECT * FROM department WHERE name = ? AND id != ?', [name, id], (err, nameResults) => {
-  if (err) return res.status(500).send(err); // Handle database errors
-
-  if (nameResults.length > 0) {
-    //return res.status(404).send('sorry branch not found');
-    responseData = {
-        status: "400",
-        message:"Record not found",
-        data:{}
-    }
-    return res.json(responseData);
-  } 
-  responseData = {
-      status: "200",
-      message:"Get all records",
-      data:{
-       department: results[0]
-      }
-  }
-
-  // Proceed with updation if the branch exists
-  db.query('UPDATE department SET name = ? WHERE id = ?', [name, id], (err) => {
-    if (err) return res.status(500).send(err);
-    res.send('User updated successfully');
+      });
+    });
   });
 });
-  
-});
-});
+
+
 // Delete a user
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
@@ -166,20 +202,28 @@ router.delete('/:id', (req, res) => {
         }
         return res.json(responseData);
       } 
+       // Proceed with deletion if the branch exists
+    db.query('UPDATE department SET status = 0 WHERE id = ?', [id], (err) => {
+      if (err) return res.status(500).send(err);
+      if (results.length === 0) 
+      {
+        responseData = {
+            status: "400",
+            message:"Record not found",
+            data:{}
+        }
+
+        return res.json(responseData);
+      } 
       responseData = {
           status: "200",
           message:"Get all records",
           data:{
-            department: results[0]
+            
           }
-      }
-
-    // Proceed with deletion if the branch exists
-    db.query('UPDATE department SET status=0 WHERE id = ?', [id], (err) => {
-      if (err) return res.status(500).send(err);
-      res.send('department deleted successfully');
+     }
+     return res.json(responseData);
     });
   });
 });
 module.exports = router;
-

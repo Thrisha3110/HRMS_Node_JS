@@ -14,24 +14,23 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: 
   {
-    user: 'narimeti.thrisha@brilyant.com',
-    pass: 'Ammulu@2003..',
+    user: 'narimeti.thrisha@brilyant.com' ,
+    pass: 'Ammulu@2003..' ,
   }
 });
 // Middleware to verify JWT token
 function authenticateToken(req,res,next) {
-const authHeader = req.headers['authorization'];
-const token = authHeader && authHeader.split(' ')[1];
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) 
-  {
+  if (!token) {
     return res.status(401).json({ message: 'Token not found. Please log in again.' });
   }
 
   jwt.verify(token, 'your-secret-key', (err, user) => {
     if (err) {
       return res.status(403).json({ message: 'Invalid token. Please log in again.' });
-    }
+    }s
     req.user = user; // Attach user info to the request object
     next();
   });
@@ -53,41 +52,53 @@ JOIN branch b ON e.branch_id = b.id
     res.json(results);
   });
 }); 
+
 // Get an employee by ID
 router.get('/:id', (req, res) => {
-  authenticateToken(req)
+  //authenticateToken(req)
   var responseData = {};
   const { id } = req.params;
   const getDetailsQuery = `
-SELECT e.id, e.employee_id, e.name, e.email, e.phone, e.doj,
-d.name AS department_name, des.name AS designation_name, b.name AS branch_name
-    FROM employee e
-JOIN department d ON e.department_id = d.id
-JOIN designation des ON e.designation_id = des.id
-JOIN branch b ON e.branch_id = b.id
-WHERE e.id = ?
-  `;
-db.query(getDetailsQuery, [id], (err, results) => {
-  if (err) {
-    return res.status(500).send({ error: 'Database error', details: err });
-  }
+  SELECT e.id, e.employee_id, e.name, e.email, e.phone, e.doj,
+  d.name AS department_name, des.name AS designation_name, b.name AS branch_name
+      FROM employee e
+  JOIN department d ON e.department_id = d.id
+  JOIN designation des ON e.designation_id = des.id
+  JOIN branch b ON e.branch_id = b.id
+  JOIN employee_education ee ON e.id = ee.employee_id
+  WHERE e.id = ?
+    `;
+    
+    let employeeResult = [];
+  db.query(getDetailsQuery, [id], (err, results) => {
+    if (err) {
+      return res.status(500).send({ error: 'Database error', details: err });
+    }
 
-  if (results.length === 0) {
-    return res.status(404).json({
-      status: "400",
-      message: "Record not found",
-      data: {},
-    });
-  }
+    if (results.length === 0) {
+      return res.status(404).json({
+        status: "400",
+        message: "Record not found",
+        data: {},
+      });
+    }
+    employeeResult = results[0]
+    
+    //const employee = processEmployeeDetails(results[0]);
+    
+  });
 
-  const employee = processEmployeeDetails(results[0]);
   res.json({
     status: "200",
     message: "Get employee record",
-    data: { employee },
+    data: { 
+    employeeResult : employeeResult,
+
+    },
   });
+
 });
-});
+
 // Create a new employee
 router.post('/',async (req, res) => {
   const { employee_id, name, email,password, phone, emergency_contact, doj, gender, blood_group, department_id, designation_id, branch_id, address, account_num, manager_id } = req.body;
@@ -189,6 +200,89 @@ router.put('/:id', (req, res) => {
       }
     );
   });
+});
+
+
+// add an employee eduction details
+router.post('/eduction/:employee_id', (req, res) => {
+  const { employee_id } = req.params;
+  const { education_type,school_university_name,year } = req.body;
+  
+  //checking employee exist or not
+  db.query('SELECT * FROM employee WHERE status = 1 AND id = ?', [employee_id], (err, results) => {
+    if (err){
+      responseData = {
+        status: "400",
+        message: err,//"Please provide eduction type,school university name,year ",
+        data:{}
+      }
+      return res.json(responseData);
+    } 
+    if (results.length === 0){
+      responseData = {
+          status: "400",
+          message: "This employee does not already exist",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+  });
+
+  if (!education_type || !school_university_name || !year || typeof year !== "number" || year.toString().length !== 4) {
+    responseData = {
+        status: "400",
+        message:"Please provide eduction type,school university name,year ",
+        data:{}
+    }
+    return res.json(responseData);
+  }
+
+  db.query('SELECT * FROM employee_education WHERE status = 1 AND education_type = ? AND employee_id = ?', [education_type, employee_id], (err, eductionResults) => {
+    if (err){
+      responseData = {
+        status: "400",
+        message: err,//"Please provide eduction type,school university name,year ",
+        data:{}
+      }
+      return res.json(responseData);
+    } 
+    if (eductionResults.length > 0){
+      responseData = {
+          status: "400",
+          message: "This " + education_type + " already exist",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+  });
+
+  // Insert the employee eduction with status set to true
+  const created_at = moment().format('YYYY-MM-DD HH:mm:ss');
+  //const year = new Date(year);//moment().format('YYYY');
+  db.query(
+    'INSERT INTO employee_education (employee_id, education_type, school_university_name, year, created_at) VALUES (?, ?, ?, ?, ?)',
+    [employee_id, education_type, school_university_name, year, created_at], // Set status to true for new entries
+    (err, insertResults) => {
+      if (err){
+        responseData = {
+            status: "500",
+            message: err,
+           data:{}
+        }
+        return res.json(responseData);
+      } 
+      // Successfully inserted
+      responseData = {
+        status: "200",
+        message:"employee eduction saved successfully",
+        data:{
+          id: insertResults.insertId
+        }
+      }
+      res.json(responseData);
+    }
+  );
+
 });
  
 // Delete an employee
