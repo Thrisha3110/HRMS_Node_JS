@@ -47,6 +47,7 @@ JOIN department d ON e.department_id = d.id
 JOIN designation des ON e.designation_id = des.id
 JOIN branch b ON e.branch_id = b.id
   `;
+ 
   db.query(getDetailsQuery, (err, results) => {
     if (err) return res.status(500).send(err);
     res.json(results);
@@ -83,8 +84,7 @@ router.get('/:id', (req, res) => {
       });
     }
     employeeResult = results[0]
-    
-    //const employee = processEmployeeDetails(results[0]);
+
   });
 
   res.json({
@@ -107,7 +107,7 @@ router.post('/',async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
   const hashedPassword = await bcrypt.hash(password, 10);
-                                                               
+                                                  
   // Check for duplicate employee_id
   db.query('SELECT * FROM employee WHERE employee_id = ?', [employee_id], (err, results) => {
     if (err) return res.status(500).send(err);
@@ -118,6 +118,7 @@ router.post('/',async (req, res) => {
         data: {},
       });
     }
+   
     const employee = processEmployeeDetails(results[0]);
     res.json({
       status: "200",
@@ -195,11 +196,11 @@ router.put('/:id', (req, res) => {
       (err) => {
         if (err) return res.status(500).send(err);
         res.send('Employee updated successfully');
+
       }
     );
   });
 });
-
 
 // add an employee eduction details
 router.post('/eduction/:employee_id', (req, res) => {
@@ -239,7 +240,7 @@ router.post('/eduction/:employee_id', (req, res) => {
     if (err){
       responseData = {
         status: "400",
-        message: err,//"Please provide eduction type,school university name,year ",
+        message: err,
         data:{}
       }
       return res.json(responseData);
