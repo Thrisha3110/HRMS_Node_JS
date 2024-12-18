@@ -30,7 +30,7 @@ function authenticateToken(req,res,next) {
   jwt.verify(token, 'your-secret-key', (err, user) => {
     if (err) {
       return res.status(403).json({ message: 'Invalid token. Please log in again.' });
-    }s
+    }
     req.user = user; // Attach user info to the request object
     next();
   });
@@ -85,7 +85,6 @@ router.get('/:id', (req, res) => {
     employeeResult = results[0]
     
     //const employee = processEmployeeDetails(results[0]);
-    
   });
 
   res.json({
@@ -125,7 +124,8 @@ router.post('/',async (req, res) => {
       status: "200",
       message: "Get employee record",
       data: { employee },
-    });
+    }); 
+    
 const created_at = moment().format('YYYY-MM-DD HH:mm:ss'); 
 
     const insertQuery = `
