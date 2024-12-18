@@ -23,10 +23,11 @@ function authenticateToken(req,res,next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) {
+  if (!token) 
+    {
     return res.status(401).json({ message: 'Token not found. Please log in again.' });
-  }
-
+    }
+  
   jwt.verify(token, 'your-secret-key', (err, user) => {
     if (err) {
       return res.status(403).json({ message: 'Invalid token. Please log in again.' });
@@ -35,7 +36,6 @@ function authenticateToken(req,res,next) {
     next();
   });
 };
-
 // Get all employees
 router.get('/', authenticateToken, (req, res) => {
   const { id } = req.params;
@@ -118,14 +118,12 @@ router.post('/',async (req, res) => {
         data: {},
       });
     }
-  
     const employee = processEmployeeDetails(results[0]);
     res.json({
       status: "200",
       message: "Get employee record",
       data: { employee },
     }); 
-    
 const created_at = moment().format('YYYY-MM-DD HH:mm:ss'); 
 
     const insertQuery = `
