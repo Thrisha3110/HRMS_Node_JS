@@ -418,3 +418,85 @@ module.exports = router;
 //   });
 // });
 // module.exports = router;
+
+// add an employee experience details
+// router.post('/experience/:employee_id', (req, res) => {
+//   const { employee_id } = req.params;
+//   const { employer,workingyear } = req.body;
+  
+//   //checking employee exist or not
+//   db.query('SELECT * FROM employee WHERE status = 1 AND id = ?', [employee_id], (err, results) => {
+//     if (err){
+//       responseData = {
+//         status: "400",
+//         message: err,//"Please provide eduction type,school university name,year ",
+//         data:{}
+//       }
+//       return res.json(responseData);
+//     } 
+//     if (results.length === 0){
+//       responseData = {
+//           status: "400",
+//           message: "This employee does not already exist",
+//           data:{}
+//       }
+//       return res.json(responseData);
+//     } 
+//   });
+
+//   if (!employer|| !workingyear == "number" || year.toString().length !== 2) {
+//     responseData = {
+//         status: "400",
+//         message:"Please provide eduction type,school university name,year ",
+//         data:{}
+//     }
+//     return res.json(responseData);
+//   }
+
+//   db.query('SELECT * FROM employee_work_experience WHERE status = 1 AND employer = ? AND employee_id = ?', [employer, employee_id], (err, experienceResults) => {
+//     if (err){
+//       responseData = {
+//         status: "400",
+//         message: err,
+//         data:{}
+//       }
+//       return res.json(responseData);
+//     } 
+//     if (experienceResults.length > 0){
+//       responseData = {
+//           status: "400",
+//           message: "This " + employer + " already exist",
+//           data:{}
+//       }
+//       return res.json(responseData);
+//     } 
+//   });
+
+//   // Insert the employee eduction with status set to true
+//   const created_at = moment().format('YYYY-MM-DD HH:mm:ss');
+//   //const year = new Date(year);//moment().format('YYYY');
+//   db.query(
+//     'INSERT INTO employee_work_experience (employee_id, employer, workingyear, created_at) VALUES (?, ?, ?, ?)',
+//     [employee_id, employer, workingyear, created_at], // Set status to true for new entries
+//     (err, insertResults) => {
+//       if (err){
+//         responseData = {
+//             status: "500",
+//             message: err,
+//            data:{}
+//         }
+//         return res.json(responseData);
+//       } 
+//       // Successfully inserted
+//       responseData = {
+//         status: "200",
+//         message:"employee experience saved successfully",
+//         data:{
+//           id: insertResults.insertId
+//         }
+//       }
+//       res.json(responseData);
+//     }
+//   );
+
+// });
