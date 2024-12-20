@@ -57,7 +57,6 @@ router.get('/:id', (req, res) => {
     }
   });
 });
-
 // Create a new user
 router.post('/', (req, res) => {
   const {name} = req.body;
@@ -197,6 +196,7 @@ router.delete('/:id', (req, res) => {
     if (err) return res.status(500).send(err);
 
     if (results.length === 0)
+
         {
       //return res.status(404).send('sorry branch not found');
       responseData = {
