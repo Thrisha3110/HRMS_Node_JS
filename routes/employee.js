@@ -92,7 +92,9 @@ router.get('/:id', (req, res) => {
         data: {},
       });
     }
-    //employeeResult = results[0]
+
+    // employeeResult = results[0]
+
     return res.status(200).json({
       status: "200",
       message: "Get employee recorddddd",
@@ -162,9 +164,12 @@ const created_at = moment().format('YYYY-MM-DD HH:mm:ss');
     };
 
     transporter.sendMail(mailContent, (error, info) => {
-      if (error) {
+      if (error) 
+      {
        
-      } else {
+      } 
+      else 
+      {
         
       }
     });
@@ -176,7 +181,8 @@ const created_at = moment().format('YYYY-MM-DD HH:mm:ss');
 });
  
 // Update an employee
-router.put('/:id', (req, res) => {
+router.put('/:id', (req, res) => 
+  {
   const { id } = req.params;
   const { name, email, password, phone, emergency_contact, doj, gender, blood_group, department_id, designation_id, branch_id, address, account_num, manager_id } = req.body;
  
@@ -184,7 +190,8 @@ router.put('/:id', (req, res) => {
     if (err) return res.status(500).send(err);
     if (results.length === 0)
       {
-      responseData = {
+      responseData = 
+      {
           status: "400",
           message:"Record not found",
           data:{}
@@ -211,7 +218,7 @@ router.put('/:id', (req, res) => {
   });
 });
 
-  ////////////////////////////////       
+          //////// employee work experience //////       
 
 // Get all work experiences
 router.get('/experience/:employee_id', (req, res) => {
@@ -301,6 +308,51 @@ router.put('/experience/:employee_id/:experience_id', (req, res) => {
       const responseData = createResponse('400', 'Missing required fields', {});
       return res.status(400).json(responseData);
   }
+  db.query('SELECT * FROM  employee WHERE id = ?', [employee_id], (err, results) => 
+    {
+    
+    if (err) {
+      responseData = {
+        status: "500",
+        message: err,
+        data:{}
+      }
+      return res.json(responseData);
+      
+    }
+
+    if (results.length == 0){ 
+      responseData = {
+          status: "400",
+          message:"This employee not found",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+  });
+  db.query('SELECT * FROM employee_work_experience WHERE id = ? AND employee_id = ?', [experience_id, employee_id], (err, results) => 
+    {
+    
+    if (err) {
+      responseData = {
+        status: "500",
+        message: err,
+        data:{}
+      }
+      return res.json(responseData);
+      
+    }
+
+    if (results.length == 0){ 
+      responseData = {
+          status: "400",
+          message:"This work experience not found",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+  });
+
 
     const updated_at = moment().format('YYYY-MM-DD HH:mm:ss');
 
@@ -321,25 +373,91 @@ router.put('/experience/:employee_id/:experience_id', (req, res) => {
 
 // Delete work experience 
 router.delete('/experience/:employee_id/:experience_id', (req, res) => {
-    const { experience_id } = req.params;
-    const query = `UPDATE employee_work_experience SET status = 0 WHERE id = ?`;
+  const { employee_id } = req.params;
+  const { experience_id } = req.params;
+  const { employer, designation, joiningdate,relievingdate } = req.body;
 
-    db.query(query, [experience_id], (err, results) => {
-        if (err) 
-          {
-            const responseData = createResponse('500', 'Failed to delete work experience', {}, err);
+  if (!employee_id ||!experience_id|| !employer || !designation||!joiningdate || !relievingdate) {
+      const responseData = createResponse('400', 'Missing required fields', {});
+      return res.status(400).json(responseData);
+  }
+  db.query('SELECT * FROM  employee WHERE id = ?', [employee_id], (err, results) => 
+    {
+    
+    if (err) {
+      responseData = {
+        status: "500",
+        message: err,
+        data:{}
+      }
+      return res.json(responseData);
+      
+    }
+
+    if (results.length == 0){ 
+      responseData = {
+          status: "400",
+          message:"This employee not found",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+  });
+  db.query('SELECT * FROM employee_work_experience WHERE id = ? AND employee_id = ?', [experience_id, employee_id], (err, results) => 
+    {
+    
+    if (err) {
+      responseData = {
+        status: "500",
+        message: err,
+        data:{}
+      }
+      return res.json(responseData);
+      
+    }
+
+    if (results.length == 0){ 
+      responseData = {
+          status: "400",
+          message:"This work experience not found",
+          data:{}
+      }
+      return res.json(responseData);
+    } 
+  });
+
+
+    const updated_at = moment().format('YYYY-MM-DD HH:mm:ss');
+
+    const query = `UPDATE employee_work_experience SET status = 0 WHERE id = ? AND employee_id = ?`;
+    db.query(query, [experience_id, employee_id], (err, results) => {
+        if (err) {
+            const responseData = createResponse('500','Failed to update work experience', {}, err);
             return res.status(500).json(responseData);
-          }
-        if (results.affectedRows === 0) 
-          {
-            const responseData = createResponse('400', 'Work experience not found', {});
+        }
+        if (results.affectedRows === 0) {
+            const responseData = createResponse('400','Work experience not found', {});
             return res.status(400).json(responseData);
-          }
-        const responseData = createResponse('200','Work experience deleted successfully', {affectedRows: results.affectedRows });
-        res.json(responseData);
+        }
+        const responseData = createResponse('200','Work experience deleted successfully', { affectedRows: results.affectedRows });
+        return res.json(responseData);
     });
 });
-module.exports = router ; 
+
+
+///////employee documents///////
+// Get all work experiences
+router.get('/documents/:employee_id', (req, res) => {
+  const query = `SELECT * FROM employee_documents WHERE status = 1`;
+  db.query(query, (err, results) => {
+      if (err) {
+          const responseData = createResponse('500', 'Failed to retrieve documents', {}, err);
+          return res.status(500).json(responseData);
+      }
+      const responseData = createResponse('200', 'employee documents retrieved successfully', { documents: results });
+      res.json(responseData);
+  });
+});
 
 // Delete an employee
 router.delete('/:id', (req,res) => {
