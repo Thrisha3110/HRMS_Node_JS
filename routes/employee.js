@@ -274,7 +274,7 @@ router.post('/experience/:employee_id', (req, res) => {
         }
         return res.json(responseData);
         
-      }1
+      }
       if (results.length == 0){ 
         responseData = {
             status: "400",
@@ -446,40 +446,72 @@ router.delete('/experience/:employee_id/:experience_id', (req, res) => {
         return res.json(responseData);
     });
 });
-
-
                  ///////employee documents///////
-
-// Get all employee documents
-router.get('/documents/:employee_id', (req, res) => {
-  const query = `SELECT * FROM employee_documents WHERE status = 1`;
-  db.query(query, (err, results) => {
-      if (err) {
-          const responseData = createResponse('500', 'Failed to retrive the documents', {}, err);
-          return res.status(500).json(responseData);
-      }
-      const responseData = createResponse('200','employee documents retrieved successfully', { documents: results });
-      res.json(responseData);
+// Get all documents for all employees
+router.get('/document', (req, res) => {
+  // Retrieve all documents from the employee_documents table
+  db.query('SELECT * FROM employee_documents', (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      const responseData = {
+        status: '500',
+        message: 'Database error',
+        data: {}
+      };
+      return res.status(500).json(responseData);
+    }
+    const responseData = {
+      status: '200',
+      message: 'All documents retrieved successfully',
+      data: results
+    };
+    res.json(responseData);
   });
 });
-// Get documents by ID
-router.get('/documents/:employee_id/:document_id', (req, res) => {
-  const { id } = req.params;
-    const query = `SELECT * FROM employee_documents WHERE id = ? AND status = 1`;
-    db.query(query, [id], (err, results) => {
-        if (err) {
-            const responseData = createResponse('500', 'Failed to retrieve documents', {}, err);
-            return res.status(500).json(responseData);
-        }
-        if (results.length === 0) {
-            const responseData = createResponse('400', 'documents not found', {});
-            return res.status(400).json(responseData);
-        }
-        const responseData = createResponse('200','documents retrieved successfully', { workExperience: results[0] });
-        res.json(responseData);
-    });
-});
 
+// Get all documents by employee ID
+router.get('/document/:employee_id', (req, res) => {
+  const { employee_id } = req.params;
+  // Check if the employee exists
+  db.query('SELECT * FROM employee WHERE id = ?', [employee_id], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      const responseData = {
+        status: '500',
+        message: 'Database error',
+        data: {}
+      };
+      return res.status(500).json(responseData);
+    }
+
+    if (results.length === 0) {
+      const responseData = {
+        status: '400',
+        message: 'Employee not found',
+        data: {}
+      };
+      return res.status(400).json(responseData);
+    }
+    db.query('SELECT * FROM employee_documents WHERE employee_id = ?', [employee_id], (err, results) => {
+      if (err) {
+        console.error('Database error:', err);
+        const responseData = {
+          status: '500',
+          message: 'Database error',
+          data: {}
+        };
+        return res.status(500).json(responseData);
+      }
+
+      const responseData = {
+        status: '200',
+        message: 'Documents retrieved successfully',
+        data: results
+      };
+      res.json(responseData);
+    });
+  });
+});
 // Multer storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -499,23 +531,13 @@ const storage = multer.diskStorage({
 });
 
 // Middleware for file upload
-const upload = multer({ storage });
-
-// router.post('/document/:employee_id', uploads.single('document_name'), (req, res) => {
-//     if (!req.file) {
-//         return res.status(400).json({ error: 'File is missing' });
-//     }
-//     res.status(200).send('File uploaded successfully');
-// });
-
+const uploads = multer({ storage });
 // Add or post or insert new work documents
-router.post('/document/:employee_id', uploads.single('document_name'), (req, res) => {
+      router.post('/document/:employee_id', uploads.single('document_name'), (req, res) => {
       const { employee_id } = req.params;
-      const { document_name, purpose } = req.body;
+      const {  purpose } = req.body;
       const file = req.file;
-      
-
-      if (req.file) {
+      if (!req.file) {
           const responseData = {
               status: '400',
               message: 'Missing required fields or file',
@@ -545,9 +567,8 @@ router.post('/document/:employee_id', uploads.single('document_name'), (req, res
           }
 
           const created_at = moment().format('YYYY-MM-DD HH:mm:ss');
-          const query = `INSERT INTO employee_documents (employee_id, document_name, purpose, file_path, created_at) VALUES (?, ?, ?, ?, ?)`;
-
-          db.query(query, [employee_id, document_name, purpose, file.path, created_at], (err, results) => {
+          const query = `INSERT INTO employee_documents (employee_id, document_name, purpose, created_at) VALUES (?, ?, ?, ?)`;
+          db.query(query, [employee_id, file.filename, purpose, created_at], (err, results) => {
               if (err) {
                   console.error('Insert error:', err);
                   const responseData = {
@@ -568,179 +589,182 @@ router.post('/document/:employee_id', uploads.single('document_name'), (req, res
       });
   
 });
-// // Update work documents by ID
 
-// router.put('/documents/:employee_id/:document_id', (req, res) => {
-//   const { employee_id } = req.params;
-//   const { document_id } = req.params;
-//   const { document_name,purpose } = req.body;
+// Update work documents by ID
+router.put('/document/:employee_id/:document_id', uploads.single('document_name'), (req, res) => {
+  const { employee_id, document_id } = req.params;
+  const {  purpose } = req.body;
+  const file = req.file;
 
-//   if (!document_name||!purpose) {
-//       const responseData = createResponse('400', 'Missing required fields', {});
-//       return res.status(400).json(responseData);
-//   }
-//   db.query('SELECT * FROM  employee WHERE id = ?', [employee_id], (err, results) => 
-//     {
-    
-//     if (err) {
-//       responseData = {
-//         status: "500",
-//         message: err,
-//         data:{}
-//       }
-//       return res.json(responseData);
-      
-//     }
+  // Validate required fields
+  if ( !purpose || !file)  {
+      const responseData = {
+          status: '400',
+          message: 'Missing required fields',
+          data: {}
+      };
+      return res.status(400).json(responseData);
+  }
 
-//     if (results.length == 0){ 
-//       responseData = {
-//           status: "400",
-//           message:"This employee not found",
-//           data:{}
-//       }
-//       return res.json(responseData);
-//     } 
-//   });
-//   db.query('SELECT * FROM employee_documents WHERE id = ? AND employee_id = ?', [experience_id, employee_id], (err, results) => 
-//     {
-    
-//     if (err) {
-//       responseData = {
-//         status: "500",
-//         message: err,
-//         data:{}
-//       }
-//       return res.json(responseData);
-      
-//     }
+  // Check if the employee exists
+  db.query('SELECT * FROM employee WHERE id = ?', [employee_id], (err, results) => {
+      if (err) {
+          console.error('Database error:', err);
+          const responseData = {
+              status: '500',
+              message: 'Database error',
+              data: {}
+          };
+          return res.status(500).json(responseData);
+      }
 
-//     if (results.length == 0){ 
-//       responseData = {
-//           status: "400",
-//           message:"This work experience not found",
-//           data:{}
-//       }
-//       return res.json(responseData);
-//     } 
-//   });
+      if (results.length === 0) {
+          const responseData = {
+              status: '400',
+              message: 'Employee not found',
+              data: {}
+          };
+          return res.status(400).json(responseData);
+      }
 
+      // Check if the document exists
+      db.query('SELECT * FROM employee_documents WHERE id = ? AND employee_id = ?', [document_id, employee_id], (err, results) => {
+          if (err) {
+              console.error('Database error:', err);
+              const responseData = {
+                  status: '500',
+                  message: 'Database error',
+                  data: {}
+              };
+              return res.status(500).json(responseData);
+          }
 
-//     const updated_at = moment().format('YYYY-MM-DD HH:mm:ss');
+          if (results.length === 0) {
+              const responseData = {
+                  status: '400',
+                  message: 'Document not found',
+                  data: {}
+              };
+              return res.status(400).json(responseData);
+          }
 
-//     const query = `UPDATE employee_documents SET employer = ?, document_name=?,purpose=?, updated_at = ? WHERE id = ? AND status = 1`;
-//     db.query(query, [document_name,purpose,updated_at, experience_id], (err, results) => {
-//         if (err) {
-//             const responseData = createResponse('500','Failed to update ', {}, err);
-//             return res.status(500).json(responseData);
-//         }
-//         if (results.affectedRows === 0) {
-//             const responseData = createResponse('400','documents not found', {});
-//             return res.status(400).json(responseData);
-//         }
-//         const responseData = createResponse('200','documents updated successfully', {affectedRows: results.affectedRows });
-//         res.json(responseData);
-//     });
-// });
+        // Update the document in the database
+          const updated_at = moment().format('YYYY-MM-DD HH:mm:ss');
+          const query = `UPDATE employee_documents SET document_name = ?, purpose = ?, updated_at = ? WHERE id = ?`;
 
-// // Delete documents 
-// router.delete('/documents/:employee_id/:document_id', (req, res) => {
-//   const { employee_id } = req.params;
-//   const { document_id } = req.params;
-//   const { document_name,purpose } = req.body;
+          db.query(query, [ file ? file.filename : results[0].document_name,purpose, updated_at, document_id], (err, results) => {
+              if (err) {
+                  console.error('Update error:', err);
+                  const responseData = {
+                      status: '500',
+                      message: 'Failed to update employee document',
+                      data: {}
+                  };
+                  return res.status(500).json(responseData);
+              }
 
-//   if (!document_name||!purpose) {
-//       const responseData = createResponse('400', 'Missing required fields', {});
-//       return res.status(400).json(responseData);
-//   }
-//   db.query('SELECT * FROM  employee WHERE id = ?', [employee_id], (err, results) => 
-//     {
-    
-//     if (err) {
-//       responseData = {
-//         status: "500",
-//         message: err,
-//         data:{}
-//       }
-//       return res.json(responseData);
-      
-//     }
+              const responseData = {
+                  status: '200',
+                  message: 'Employee document updated successfully',
+                  data: { id: document_id }
+              };
+              res.json(responseData);
+          });
+      });
+  });
+});
 
-//     if (results.length == 0){ 
-//       responseData = {
-//           status: "400",
-//           message:"This employee not found",
-//           data:{}
-//       }
-//       return res.json(responseData);
-//     } 
-//   });
-//   db.query('SELECT * FROM  employee_documents WHERE id = ? AND employee_id = ?', [experience_id, employee_id], (err, results) => 
-//     {
-    
-//     if (err) {
-//       responseData = {
-//         status: "500",
-//         message: err,
-//         data:{}
-//       }
-//       return res.json(responseData);
-      
-//     }
+// Delete a document 
+router.delete('/document/:employee_id/:document_id', (req, res) => {
+  const { employee_id, document_id } = req.params;
 
-//     if (results.length == 0){ 
-//       responseData = {
-//           status: "400",
-//           message:"This work documents not found",
-//           data:{}
-//       }
-//       return res.json(responseData);
-//     } 
-//   });
+  // Check if the employee exists
+  db.query('SELECT * FROM employee WHERE id = ?', [employee_id], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      const responseData = {
+        status: '500',
+        message: 'Database error',
+        data: {}
+      };
+      return res.status(500).json(responseData);
+    }
 
+    if (results.length === 0) {
+      const responseData = {
+        status: '400',
+        message: 'Employee not found',
+        data: {}
+      };
+      return res.status(400).json(responseData);
+    }
+    // Check if the document exists
+    db.query('SELECT * FROM employee_documents WHERE id = ? AND employee_id = ?', [document_id, employee_id], (err, results) => {
+      if (err) {
+        console.error('Database error:', err);
+        const responseData = {
+          status: '500',
+          message: 'Database error',
+          data: {}
+        };
+        return res.status(500).json(responseData);
+      }
 
-//     const updated_at = moment().format('YYYY-MM-DD HH:mm:ss');
-
-//     const query = `UPDATE  employee_documents SET status = 0 WHERE id = ? AND employee_id = ?`;
-//     db.query(query, [experience_id, employee_id], (err, results) => {
-//         if (err) {
-//             const responseData = createResponse('500','Failed to update employee documents', {}, err);
-//             return res.status(500).json(responseData);
-//         }
-//         if (results.affectedRows === 0) {
-//             const responseData = createResponse('400','employee documents not found', {});
-//             return res.status(400).json(responseData);
-//         }
-//         const responseData = createResponse('200','employee documents deleted successfully', { affectedRows: results.affectedRows });
-//         return res.json(responseData);
-//     });
-// });
-
-
-// // Delete an employee
-// router.delete('/:id', (req,res) => {
-//   const { id } = req.params;
- 
-//   db.query('SELECT * FROM employee WHERE id = ?', [id], (err, results) => {
-//     if (err) return res.status(500).send(err);
-//      if (results.length === 0) {
-//       return res.status(404).json({
-//         status: "400",
-//         message: "Record not found",
-//         data: {},
-//       });
-//     }
+      if (results.length === 0) {
+        const responseData = {
+          status: '400',
+          message: 'Document not found',
+          data: {}
+        };
+        return res.status(400).json(responseData);
+      }
+  // Delete the document from the database:
+        //const updated_at = moment().format('YYYY-MM-DD HH:mm:ss');
+        const query = `UPDATE employee_documents SET status = 0 WHERE id = ? AND employee_id = ?`;
+        db.query(query, [document_id, employee_id], (err, results) => {
+        if (err) {
+          console.error('Delete error:', err);
+          const responseData = {
+            status: '500',
+            message: 'Failed to delete employee document',
+            data: {}
+          };
+          return res.status(500).json(responseData);
+        }
+        const responseData = {
+          status: '200',
+          message: 'Employee document deleted successfully',
+          data: {id:document_id} 
+        };
+        res.json(responseData);
+      });
+    });
+  });
+});
+// Delete an employee
+router.delete('/:id', (req,res) => {
+  const { id } = req.params;
+  db.query('SELECT * FROM employee WHERE id = ?', [id], (err, results) => {
+    if (err) return res.status(500).send(err);
+     if (results.length === 0) {
+      return res.status(404).json({
+        status: "400",
+        message: "Record not found",
+        data: {},
+      });
+    }
   
-//     const employee = processEmployeeDetails(results[0]);
-//     res.json({
-//       status: "200",
-//       message: "Get employee record",
-//       data: { employee },
-//     });
-//     // Proceed with deletion if the employee is not active
-//     db.query('UPDATE employee SET status = 0 WHERE id = ?', [id], (err) => {
-//       if (err) return res.status(500).send(err);
-//       res.send('Employee deleted successfully');
-//     });
-//   });
-// });
+    const employee = processEmployeeDetails(results[0]);
+    res.json({
+      status: "200",
+      message: "Get employee record",
+      data: { employee },
+    });
+    // Proceed with deletion if the employee is not active
+    db.query('UPDATE employee SET status = 0 WHERE id = ?', [id], (err) => {
+      if (err) return res.status(500).send(err);
+      res.send('Employee deleted successfully');
+    });
+  });
+});
 module.exports = router;
